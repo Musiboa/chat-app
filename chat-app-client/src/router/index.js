@@ -6,7 +6,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/App.vue')
+      component: () => import('@/App.vue'),
+      redirect: '/chat'
     },
     {
       path: '/login',
@@ -25,9 +26,6 @@ router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('token')
   if (to.name !== 'login' && !isAuthenticated) {
     next({ name: 'login' })
-  }
-  if (to.name === 'login' && isAuthenticated) {
-    next({ name: 'chat' })
   } else {
     next()
   }

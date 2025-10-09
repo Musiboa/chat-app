@@ -104,3 +104,36 @@ export const getCurrentUser = async (req, res) => {
     res.status(500).json({ message: '服务器错误' });
   }
 };
+
+// 更新用户信息
+export const updateUser = async (req, res) => {
+  try {
+    const { username, phone, avatar } = req.body;
+    // 检查用户名或手机号是否已被其他用户使用     
+    const [existingUsers] = await pool.query(
+      'SELECT * FROM users WHERE (username = ? OR phone = ?) AND id <> ?',
+      [username, phone, req.user.id]
+    );
+    
+    if (existingUsers.length > 0) {
+      return res.status(400).json({ message: '用户名或手机号已被使用' });
+    }
+
+    // 更新用户数据
+    await pool.query(
+      'UPDATE users SET username = ?, phone = ?, avatar = ? WHERE id = ?',
+      [username, phone, avatar, req.user.id]
+    );
+
+    // 返回更新后的用户信息
+    const [updatedUsers] = await pool.query(
+      'SELECT id, username, phone, avatar, status FROM users WHERE id = ?',
+      [req.user.id]
+    );  
+    res.json(updatedUsers[0]);
+  } catch (error) {
+    console.error('更新用户信息错误:', error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+};
+

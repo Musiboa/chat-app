@@ -5,7 +5,8 @@ import http from 'http';
 import cors from 'cors';
 import { initSocket } from './config/socket.js';
 import authRoutes from './routes/authRoutes.js';
-// import chatRoutes from './routes/chatRoutes.js';
+import friendRoutes from './routes/friendRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 
 // 初始化Express
 const app = express();
@@ -14,7 +15,8 @@ app.use(express.json());
 
 // 注册路由
 app.use('/api/auth', authRoutes);
-// app.use('/api/chat', chatRoutes);
+app.use('/api/friends', friendRoutes);
+app.use('/api/chat', chatRoutes);
 
 // 创建HTTP服务器
 const server = http.createServer(app);

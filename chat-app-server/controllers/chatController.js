@@ -1,0 +1,280 @@
+import pool from '../config/db.js'
+
+// 创建会话
+export const createConversation = async (req, res) => {
+  const connection = await pool.getConnection()
+  try {
+    const userId = req.user.id
+    const { name, isGroup = false, memberIds = [] } = req.body
+
+    // 开始事务
+    await connection.beginTransaction()
+
+    // 创建会话
+    const [conversationResult] = await connection.query(
+      'INSERT INTO conversations (name, is_group) VALUES (?, ?)',
+      [isGroup ? name : null, isGroup]
+    )
+
+    const conversationId = conversationResult.insertId
+
+    // 添加会话成员
+    const members = isGroup ? [userId, ...memberIds] : [userId, ...memberIds]
+    const memberValues = members.map(id => [conversationId, id])
+
+    if (memberValues.length > 0) {
+      await connection.query(
+        'INSERT INTO conversation_members (conversation_id, user_id) VALUES ?',
+        [memberValues]
+      )
+    }
+
+    // 提交事务
+    await connection.commit()
+
+    // 获取创建的会话详情
+    const [conversation] = await pool.query(
+      `
+      SELECT c.*, 
+             GROUP_CONCAT(u.username) as members
+      FROM conversations c
+      LEFT JOIN conversation_members cm ON c.id = cm.conversation_id
+      LEFT JOIN users u ON cm.user_id = u.id
+      WHERE c.id = ?
+      GROUP BY c.id
+    `,
+      [conversationId]
+    )
+
+    res.status(201).json({
+      message: '会话创建成功',
+      conversation: conversation[0]
+    })
+  } catch (error) {
+    // 回滚事务
+    await connection.rollback()
+    console.error('创建会话错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  } finally {
+    connection.release()
+  }
+}
+
+// 获取会话列表
+export const getConversations = async (req, res) => {
+  try {
+    const userId = req.user.id
+
+    const [conversations] = await pool.query(
+      `
+      SELECT c.id, c.name, c.is_group, c.created_at, c.updated_at,
+             GROUP_CONCAT(u.username) as members,
+             COUNT(cm.user_id) as member_count
+      FROM conversations c
+      JOIN conversation_members cm ON c.id = cm.conversation_id
+      JOIN users u ON cm.user_id = u.id
+      WHERE c.id IN (
+        SELECT conversation_id 
+        FROM conversation_members 
+        WHERE user_id = ?
+      )
+      GROUP BY c.id
+      ORDER BY c.updated_at DESC
+    `,
+      [userId]
+    )
+
+    res.json(conversations)
+  } catch (error) {
+    console.error('获取会话列表错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  }
+}
+
+// 获取会话详情
+export const getConversationDetails = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { conversationId } = req.params
+
+    // 验证用户是否是会话成员
+    const [memberCheck] = await pool.query(
+      'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
+      [conversationId, userId]
+    )
+
+    if (memberCheck.length === 0) {
+      return res.status(403).json({ message: '您不是该会话的成员' })
+    }
+
+    // 获取会话详情和成员列表
+    const [conversationDetails] = await pool.query(
+      `
+      SELECT c.id, c.name, c.is_group, c.created_at, c.updated_at,
+             u.id as user_id, u.username as user_name
+      FROM conversations c
+      JOIN conversation_members cm ON c.id = cm.conversation_id
+      JOIN users u ON cm.user_id = u.id
+      WHERE c.id = ?
+      ORDER BY cm.joined_at
+    `,
+      [conversationId]
+    )
+
+    if (conversationDetails.length === 0) {
+      return res.status(404).json({ message: '会话不存在' })
+    }
+
+    const conversation = {
+      id: conversationDetails[0].id,
+      name: conversationDetails[0].name,
+      is_group: conversationDetails[0].is_group,
+      created_at: conversationDetails[0].created_at,
+      updated_at: conversationDetails[0].updated_at,
+      members: conversationDetails.map(item => ({
+        id: item.user_id,
+        username: item.user_name
+      }))
+    }
+
+    res.json(conversation)
+  } catch (error) {
+    console.error('获取会话详情错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  }
+}
+
+// 添加成员到群聊
+export const addMembersToConversation = async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { conversationId, memberIds } = req.body
+
+    // 验证会话是否存在且是群聊
+    const [conversation] = await pool.query(
+      'SELECT is_group FROM conversations WHERE id = ?',
+      [conversationId]
+    )
+
+    if (conversation.length === 0) {
+      return res.status(404).json({ message: '会话不存在' })
+    }
+
+    if (!conversation[0].is_group) {
+      return res.status(400).json({ message: '只能向群聊添加成员' })
+    }
+
+    // 验证当前用户是否是会话成员
+    const [memberCheck] = await pool.query(
+      'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
+      [conversationId, userId]
+    )
+
+    if (memberCheck.length === 0) {
+      return res.status(403).json({ message: '您不是该会话的成员' })
+    }
+
+    // 添加新成员
+    const memberValues = memberIds.map(id => [conversationId, id])
+    if (memberValues.length > 0) {
+      await pool.query(
+        'INSERT IGNORE INTO conversation_members (conversation_id, user_id) VALUES ?',
+        [memberValues]
+      )
+    }
+
+    res.json({ message: '成员添加成功' })
+  } catch (error) {
+    console.error('添加成员错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  }
+}
+
+// 发送消息
+export const sendMessage = async (req, res) => {
+  const connection = await pool.getConnection();
+  try {
+    const senderId = req.user.id;
+    const { conversationId, content, messageType = 'text' } = req.body;
+
+    // 验证用户是否是会话成员
+    const [memberCheck] = await connection.query(
+      'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
+      [conversationId, senderId]
+    );
+
+    if (memberCheck.length === 0) {
+      return res.status(403).json({ message: '您不是该会话的成员' });
+    }
+
+    // 插入消息
+    const [messageResult] = await connection.query(
+      'INSERT INTO messages (conversation_id, sender_id, content, message_type) VALUES (?, ?, ?, ?)',
+      [conversationId, senderId, content, messageType]
+    );
+
+    // 更新会话的updated_at字段
+    await connection.query(
+      'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+      [conversationId]
+    );
+
+    // 获取发送的消息详情
+    const [messageDetails] = await connection.query(`
+      SELECT m.*, u.username as sender_name
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE m.id = ?
+    `, [messageResult.insertId]);
+
+    res.status(201).json({
+      message: '消息发送成功',
+      data: messageDetails[0]
+    });
+  } catch (error) {
+    console.error('发送消息错误:', error);
+    res.status(500).json({ message: '服务器错误' });
+  } finally {
+    connection.release();
+  }
+};
+
+// 获取会话消息
+export const getConversationMessages = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { conversationId } = req.params;
+    const { limit = 50, offset = 0 } = req.query;
+
+    // 验证用户是否是会话成员
+    const [memberCheck] = await pool.query(
+      'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
+      [conversationId, userId]
+    );
+
+    if (memberCheck.length === 0) {
+      return res.status(403).json({ message: '您不是该会话的成员' });
+    }
+
+    // 获取会话消息，按创建时间倒序排列
+    const [messages] = await pool.query(`
+      SELECT m.*, u.username as sender_name
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE m.conversation_id = ?
+      ORDER BY m.created_at DESC
+      LIMIT ? OFFSET ?
+    `, [conversationId, parseInt(limit), parseInt(offset)]);
+
+    // 将消息按时间正序排列（从旧到新）
+    const orderedMessages = messages.reverse();
+
+    res.json({
+      message: '获取消息成功',
+      data: orderedMessages
+    });
+  } catch (error) {
+    console.error('获取会话消息错误:', error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+};

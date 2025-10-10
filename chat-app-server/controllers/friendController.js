@@ -118,3 +118,32 @@ export const getFriendRequests = async (req, res) => {
     res.status(500).json({ message: '服务器错误' })
   }
 }
+
+// 搜索用户请求
+export const searchUsers = async (req, res) => {
+  try {
+    const userId = req.user.id // 当前用户ID
+    const { keywords } = req.query // 从查询参数获取搜索关键词
+
+    if (!keywords || keywords.trim() === '') {
+      return res.status(400).json({ message: '请输入搜索关键词' })
+    }
+
+    // 搜索用户（排除自己）
+    const [users] = await pool.query(
+      `
+      SELECT id, username, phone, avatar 
+      FROM users 
+      WHERE (username LIKE ? OR phone LIKE ?) 
+      AND id != ?
+      LIMIT 20
+      `,
+      [`%${keywords}%`, `%${keywords}%`, userId]
+    )
+
+    res.json(users)
+  } catch (error) {
+    console.error('搜索用户错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  }
+}

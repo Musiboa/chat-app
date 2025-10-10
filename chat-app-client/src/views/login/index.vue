@@ -37,10 +37,9 @@ const userInfo = ref({
 })
 const logup = async () => {
   try {
-    const { data } = await reqLogup(userInfo.value)
+    await reqLogup(userInfo.value)
     ElMessage.success('注册成功，请登录')
     isLogup.value = false
-    console.log(data)
   } catch (error) {
     console.log(error)
   }

@@ -80,7 +80,7 @@ export const getFriendList = async (req, res) => {
 
     const [friends] = await pool.query(
       `
-      SELECT u.id, u.username, u.phone 
+      SELECT u.id, u.username, u.phone, u.avatar
       FROM users u
       JOIN friendships f ON (u.id = f.user_id OR u.id = f.friend_id)
       WHERE (f.user_id = ? OR f.friend_id = ?) 
@@ -104,7 +104,7 @@ export const getFriendRequests = async (req, res) => {
 
     const [requests] = await pool.query(
       `
-      SELECT f.id as requestId, u.id as userId, u.username, f.created_at 
+      SELECT f.id as requestId, u.id as userId, u.username, u.phone, u.avatar, f.created_at 
       FROM users u
       JOIN friendships f ON u.id = f.user_id
       WHERE f.friend_id = ? AND f.status = 'pending'

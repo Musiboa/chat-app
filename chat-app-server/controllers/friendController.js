@@ -80,7 +80,7 @@ export const getFriendList = async (req, res) => {
 
     const [friends] = await pool.query(
       `
-      SELECT u.id, u.username, u.phone, u.avatar
+      SELECT u.id as userId, u.username, u.phone, u.avatar
       FROM users u
       JOIN friendships f ON (u.id = f.user_id OR u.id = f.friend_id)
       WHERE (f.user_id = ? OR f.friend_id = ?) 

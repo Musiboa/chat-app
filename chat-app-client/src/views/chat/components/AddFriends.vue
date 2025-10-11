@@ -1,6 +1,5 @@
 <template>
-  <el-dialog title="添加好友" v-model="visible" center
-    :close-on-click-modal="false" class="add-friends-dialog">
+  <el-dialog title="添加好友" v-model="visible" center :close-on-click-modal="false">
     <div class="add-friends-content">
       <el-input v-model="keywords" @keyup.enter="handleSearchUsers" placeholder="请输入搜索关键词"></el-input>
       <div class="no-data" v-if="userList.length === 0">暂无用户</div>
@@ -26,7 +25,7 @@ import { searchUsers, addFriend } from '@/api/api'
 const visible = defineModel()
 let keywords = ref('')
 let userList = ref([])
-const handleSearchUsers = async () => { 
+const handleSearchUsers = async () => {
   try {
     const { data } = await searchUsers({ keywords: keywords.value })
     userList.value = data
@@ -51,30 +50,34 @@ const handleAddFriend = async (id) => {
   flex-direction: column;
   gap: 20px;
 }
+
 .no-data {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
 .user-list {
   flex: 1;
   box-sizing: border-box;
   padding: 20px 0;
+
   .user-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid #f0f0f0;
+
     &:last-child {
       border-bottom: none;
     }
   }
+
   .user-item-info {
     display: flex;
     align-items: center;
     gap: 10px;
   }
 }
-
 </style>

@@ -32,11 +32,28 @@ export function getFriendList() {
   })
 }
 
+// 获取好友请求列表
+export function getNewFriendList() {
+  return request({
+    method: 'GET',
+    url: '/friends/newlist'
+  })
+}
+
 // 添加好友
 export function addFriend(data) {
   return request({
     method: 'POST',
     url: '/friends/add',
+    data
+  })
+}
+
+// 处理好友请求
+export function handleFriendRequest(data) {
+  return request({
+    method: 'POST',
+    url: '/friends/handle',
     data
   })
 }

@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" class="create-chat-group-dialog" center>
+  <el-dialog v-model="visible" :close-on-click-modal="false" center>
     <el-row>
       <el-col :span="12">
         <el-tree :data="friendList" :props="defaultProps" show-checkbox></el-tree>
@@ -25,6 +25,6 @@ const getFriends = async () => {
   }
 }
 const defaultProps = {
-  
+
 }
 </script>

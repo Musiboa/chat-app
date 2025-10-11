@@ -86,6 +86,22 @@ export const login = async (req, res) => {
   }
 };
 
+// 用户退出登录
+export const logout = async (req, res) => {
+  try {
+    // 将用户状态更新为离线
+    await pool.query(
+      'UPDATE users SET status = "offline" WHERE id = ?',
+      [req.user.id]
+    );
+    
+    res.json({ message: '退出登录成功' });
+  } catch (error) {
+    console.error('退出登录错误:', error);
+    res.status(500).json({ message: '服务器错误' });
+  }
+};
+
 // 获取当前用户信息
 export const getCurrentUser = async (req, res) => {
   try {

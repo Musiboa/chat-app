@@ -8,6 +8,13 @@ export function reqLogin(data) {
   })
 }
 
+export function reqLogout() {
+  return request({
+    method: 'POST',
+    url: '/auth/logout'
+  })
+}
+
 export function reqLogup(data) {
   return request({
     method: 'POST',
@@ -63,6 +70,15 @@ export function searchUsers(params) {
   return request({
     method: 'GET',
     url: '/friends/search',
+    params
+  })
+}
+
+// 搜索好友
+export function findFriends(params) {
+  return request({
+    method: 'GET',
+    url: '/friends/find',
     params
   })
 }

@@ -4,7 +4,7 @@
       <search-input></search-input>
       <el-tree :data="friendList" node-key="id" :props="friendProps">
         <template #default="{ node, data }">
-          <div class="friend-tree-node" @click="showFriendDetail(data)">
+          <div class="friend-tree-node" @click="showFriendDetail(node)">
             <span class="tree-node-info">
               <el-avatar shape="circle" :size="20" :src="data.avatar" v-if="node.level > 1"></el-avatar>
               <span>{{ data.label }}</span>
@@ -18,13 +18,13 @@
       </el-tree>
     </el-aside>
     <el-main>
-      <div class="friends-main" v-if="currentFriend.id">
+      <div class="friends-main" v-if="currentFriend.userId">
         <div class="major-info">
           <div class="major-info-left">
             <el-avatar :src="currentFriend.avatar" :size="100" shape="circle"></el-avatar>
             <div class="major-info-left-text">
               <h2>{{ currentFriend.username }}</h2>
-              <p>ID: {{ currentFriend.id }}</p>
+              <p>ID: {{ currentFriend.userId }}</p>
               <p>状态: {{ currentFriend.status === 'online' ? '在线' : '离线' }}</p>
             </div>
           </div>
@@ -74,8 +74,9 @@ const getFriends = async () => {
     console.error('获取好友列表失败:', error);
   }
 };
-const showFriendDetail = (data) => {
-  currentFriend.value = data;
+const showFriendDetail = (node) => {
+  if(node.level <= 1) return;
+  currentFriend.value = node.data;
 };
 const handleRequest = async (node, isAgree) => {
   const message = isAgree ? '同意' : '拒绝';

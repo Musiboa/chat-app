@@ -37,5 +37,10 @@ let showCreateChatGroup = ref(false)
 :deep(.add-friends-dialog),
 :deep(.create-chat-group-dialog) {
   height: 70vh;
+  display: flex;
+  flex-direction: column;
+  .el-dialog__body { 
+    flex: 1;
+  }
 }
 </style>

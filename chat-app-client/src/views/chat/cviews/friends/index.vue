@@ -31,7 +31,7 @@
         </div>
         <div class="more-info"></div>
         <div class="btn-group">
-          <el-button type="primary">发消息</el-button>
+          <el-button type="primary" @click="createChat">发消息</el-button>
         </div>
       </div>
       <div class="no-data" v-else>暂无数据</div>
@@ -42,7 +42,7 @@
 import { ref, onMounted } from 'vue';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import SearchInput from '@/views/chat/components/SearchInput.vue';
-import { getFriendList, getNewFriendList, handleFriendRequest } from '@/api/api';
+import { getFriendList, getNewFriendList, handleFriendRequest, createConversation } from '@/api/api';
 const friendProps = {
   label: 'label',
   children: 'list'
@@ -96,6 +96,17 @@ const handleRequest = async (node, isAgree) => {
   }).catch(() => {
     console.log('取消好友请求');
   });
+};
+const createChat = async () => {
+  try {
+    const params = { name: currentFriend.value.username, memberIds: [currentFriend.value.userId] };
+    console.log('params:', params);
+    await createConversation(params);
+    ElMessage.success('已创建会话');
+  } catch (error) {
+    const { response: { data } } = error;
+    ElMessage.error(data.message);
+  }
 };
 onMounted(() => {
   getFriends();

@@ -14,7 +14,7 @@
           </li>
         </ul>
         <div class="selected-footer">
-          <el-button type="primary">创建群聊</el-button>
+          <el-button type="primary" @click="createGroupChat">创建群聊</el-button>
           <el-button @click="visible = false">取消</el-button>
         </div>
       </el-col>
@@ -23,7 +23,8 @@
 </template>
 <script setup>
 import { onMounted, ref } from 'vue'
-import { getFriendList, findFriends } from '@/api/api'
+import { ElMessage } from 'element-plus'
+import { getFriendList, findFriends, createConversation } from '@/api/api'
 const visible = defineModel()
 let friendList = ref([])
 let groupMembers = ref([])
@@ -58,6 +59,20 @@ const searchFriends = async () => {
     friendList.value = data
   } catch (error) {
     console.error('搜索好友列表失败:', error)
+  }
+}
+const createGroupChat = async () => {
+  try {
+    const params = {
+      name: '未命名',
+      isGroup: true,
+      memberIds: groupMembers.value.map(item => item.userId)
+    }
+    const { data } = await createConversation(params)
+    ElMessage.success(`群聊${data.conversation.name}创建成功`)
+    visible.value = false
+  } catch (error) {
+    console.error('创建群聊失败:', error)
   }
 }
 const defaultProps = {

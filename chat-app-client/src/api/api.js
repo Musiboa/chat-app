@@ -82,3 +82,38 @@ export function findFriends(params) {
     params
   })
 }
+
+// 创建会话
+export function createConversation(data) {
+  return request({
+    method: 'POST',
+    url: '/chat/create',
+    data
+  })
+}
+
+// 获取会话列表
+export function getConversations() {
+  return request({
+    method: 'GET',
+    url: '/chat/list'
+  })
+}
+
+// 获取会话消息
+export function getConversationMessages({ conversationId, ...params }) {
+  return request({
+    method: 'GET',
+    url: `/chat/${conversationId}/messages`,
+    params
+  })
+}
+
+// 发送消息
+export function sendMessage(data) {
+  return request({
+    method: 'POST',
+    url: `/chat/${data.conversationId}/messages`,
+    data
+  })
+}

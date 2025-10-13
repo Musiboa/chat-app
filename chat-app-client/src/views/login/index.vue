@@ -24,11 +24,13 @@
   </div>
 </template>
 <script setup>
-import { ref } from 'vue';
+import { nextTick, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useUserStore } from '@/stores/user';
 import { reqLogin, reqLogup } from '@/api/api';
 import { ElMessage } from 'element-plus';
 const $router = useRouter();
+const userStore = useUserStore()
 let isLogup = ref(false);
 const userInfo = ref({
   username: '',
@@ -49,6 +51,8 @@ const login = async () => {
     const { data } = await reqLogin(userInfo.value)
     localStorage.setItem('token', data.token)
     ElMessage.success('登录成功')
+    userStore.setUser(data.user)
+    await nextTick()
     $router.push({ name: 'chat' })
   } catch (error) { 
     console.log(error)

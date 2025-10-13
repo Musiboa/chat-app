@@ -4,7 +4,8 @@ import {
   handleFriendRequest,
   getFriendList,
   getFriendRequests,
-  searchUsers
+  searchUsers,
+  findFriends
 } from '../controllers/friendController.js'
 import { authenticateToken } from '../utils/auth.js'
 const router = express.Router()
@@ -14,4 +15,5 @@ router.post('/handle', authenticateToken, handleFriendRequest)
 router.get('/list', authenticateToken, getFriendList)
 router.get('/newlist', authenticateToken, getFriendRequests)
 router.get('/search', authenticateToken, searchUsers)
+router.get('/find', authenticateToken, findFriends)
 export default router

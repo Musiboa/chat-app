@@ -125,8 +125,18 @@ export const searchUsers = async (req, res) => {
     const userId = req.user.id // 当前用户ID
     const { keywords } = req.query // 从查询参数获取搜索关键词
 
+    // 当 keywords 为空时，搜索所有用户（排除自己）
     if (!keywords || keywords.trim() === '') {
-      return res.status(400).json({ message: '请输入搜索关键词' })
+      const [users] = await pool.query(
+        `
+        SELECT id, username, phone, avatar 
+        FROM users 
+        WHERE id != ?
+        LIMIT 20
+        `,
+        [userId]
+      )
+      return res.json(users)
     }
 
     // 搜索用户（排除自己）
@@ -144,6 +154,51 @@ export const searchUsers = async (req, res) => {
     res.json(users)
   } catch (error) {
     console.error('搜索用户错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  }
+}
+
+// 搜索好友请求
+export const findFriends = async (req, res) => { 
+  try { 
+    const userId = req.user.id // 当前用户ID
+    const { keywords } = req.query // 从查询参数获取搜索关键词
+
+    // 当 keywords 为空时，返回所有好友
+    if (!keywords || keywords.trim() === '') {
+      const [friends] = await pool.query(
+        `
+        SELECT u.id as userId, u.username, u.phone, u.avatar
+        FROM users u
+        JOIN friendships f ON (u.id = f.user_id OR u.id = f.friend_id)
+        WHERE (f.user_id = ? OR f.friend_id = ?) 
+        AND f.status = 'accepted'
+        AND u.id != ?
+        LIMIT 20
+        `,
+        [userId, userId, userId]
+      )
+      return res.json(friends)
+    }
+
+    // 搜索好友（排除自己）
+    const [friends] = await pool.query(
+      `
+      SELECT u.id as userId, u.username, u.phone, u.avatar
+      FROM users u
+      JOIN friendships f ON (u.id = f.user_id OR u.id = f.friend_id)
+      WHERE (f.user_id = ? OR f.friend_id = ?) 
+      AND f.status = 'accepted'
+      AND u.id != ?
+      AND (u.username LIKE ? OR u.phone LIKE ?)
+      LIMIT 20
+      `,
+      [userId, userId, userId, `%${keywords}%`, `%${keywords}%`]
+    )
+
+    res.json(friends)
+  } catch (error) { 
+    console.error('搜索好友错误:', error)
     res.status(500).json({ message: '服务器错误' })
   }
 }

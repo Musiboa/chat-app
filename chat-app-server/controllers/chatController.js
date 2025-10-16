@@ -67,79 +67,55 @@ export const getConversations = async (req, res) => {
 
     const [conversations] = await pool.query(
       `
-      SELECT c.id, c.name, c.is_group, c.created_at, c.updated_at,
-             GROUP_CONCAT(u.username) as members,
-             COUNT(cm.user_id) as member_count
+      SELECT c.id, c.name, c.is_group, c.avatar, c.created_at, c.updated_at,
+             cm.user_id,
+             u.username,
+             u.avatar,
+             COUNT(cm2.user_id) as member_count
       FROM conversations c
       JOIN conversation_members cm ON c.id = cm.conversation_id
       JOIN users u ON cm.user_id = u.id
+      JOIN conversation_members cm2 ON c.id = cm2.conversation_id
       WHERE c.id IN (
         SELECT conversation_id 
         FROM conversation_members 
         WHERE user_id = ?
       )
-      GROUP BY c.id
+      GROUP BY c.id, cm.user_id, u.username, u.avatar
       ORDER BY c.updated_at DESC
     `,
       [userId]
     )
 
-    res.json(conversations)
+    // 对结果进行重组，将同一会话的成员组织成数组
+    const conversationMap = new Map()
+    
+    conversations.forEach(row => {
+      if (!conversationMap.has(row.id)) {
+        conversationMap.set(row.id, {
+          id: row.id,
+          name: row.name,
+          is_group: row.is_group,
+          avatar: row.avatar,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          member_count: row.member_count,
+          members: []
+        })
+      }
+      
+      conversationMap.get(row.id).members.push({
+        userId: row.user_id,
+        username: row.username,
+        avatar: row.avatar
+      })
+    })
+
+    const result = Array.from(conversationMap.values())
+
+    res.json(result)
   } catch (error) {
     console.error('获取会话列表错误:', error)
-    res.status(500).json({ message: '服务器错误' })
-  }
-}
-
-// 获取会话详情
-export const getConversationDetails = async (req, res) => {
-  try {
-    const userId = req.user.id
-    const { conversationId } = req.params
-
-    // 验证用户是否是会话成员
-    const [memberCheck] = await pool.query(
-      'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
-      [conversationId, userId]
-    )
-
-    if (memberCheck.length === 0) {
-      return res.status(403).json({ message: '您不是该会话的成员' })
-    }
-
-    // 获取会话详情和成员列表
-    const [conversationDetails] = await pool.query(
-      `
-      SELECT c.id, c.name, c.is_group, c.created_at, c.updated_at,
-             u.id as user_id, u.username as user_name
-      FROM conversations c
-      JOIN conversation_members cm ON c.id = cm.conversation_id
-      JOIN users u ON cm.user_id = u.id
-      WHERE c.id = ?
-      ORDER BY cm.joined_at
-    `,
-      [conversationId]
-    )
-
-    if (conversationDetails.length === 0) {
-      return res.status(404).json({ message: '会话不存在' })
-    }
-
-    const conversation = {
-      id: conversationDetails[0].id,
-      name: conversationDetails[0].name,
-      is_group: conversationDetails[0].is_group,
-      created_at: conversationDetails[0].created_at,
-      updated_at: conversationDetails[0].updated_at,
-      members: conversationDetails.map(item => ({
-        id: item.user_id,
-        username: item.user_name
-      }))
-    }
-
-    res.json(conversation)
-  } catch (error) {
-    console.error('获取会话详情错误:', error)
     res.status(500).json({ message: '服务器错误' })
   }
 }

@@ -4,15 +4,15 @@
       <search-input></search-input>
       <ul class="conversation-list">
         <li v-for="conv in conversationList" :key="conv.id" class="conversation-item" @click="switchConversation(conv)">
-          <el-avatar shape="circle" :size="50" icon="UserFilled"></el-avatar>
-          <span>{{ conv.name }}</span>
+          <el-avatar shape="circle" :size="50" :src="getConvAvatar(conv)"></el-avatar>
+          <span>{{ getConvName(conv) }}</span>
         </li>
       </ul>
     </el-aside>
     <el-main>
       <div class="conversation-main" v-if="currentConversation.id">
         <div class="main-header">
-          <h1>{{ currentConversation.name }}</h1>
+          <h1>{{ getConvName(currentConversation) }}</h1>
         </div>
         <div class="main-message-container" ref="messageContainer">
           <ul class="message-list">
@@ -36,7 +36,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user'
-import { getConversations, getConversationMessages, sendMessage } from '@/api/api'
+import { getConversations, getConversationMessages } from '@/api/api'
 import SocketService from '@/utils/socket'
 import SearchInput from '@/views/chat/components/SearchInput.vue';
 const userStore = useUserStore()
@@ -45,6 +45,15 @@ let currentConversation = ref({})
 let messageContent = ref('')
 let messageList = ref([])
 const messageContainer = ref(null)
+// 计算会话名称
+// 如果是单聊，返回对方用户名
+// 如果是群聊，返回群名称
+const getConvName = (conv) => { 
+  return conv.name || conv.members.find(p => p.userId !== userStore.user.id).username
+}
+const getConvAvatar = (conv) => {
+  return conv.isGroup ? conv.avatar : conv.members.find(p => p.userId !== userStore.user.id).avatar
+}
 const getConversationList = async () => {
   try {
     const { data } = await getConversations()

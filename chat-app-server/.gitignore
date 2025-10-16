@@ -1,0 +1,20 @@
+node_modules
+npm-debug.log*
+.npm
+.npmrc
+dist/
+build/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Logs
+logs
+*.log

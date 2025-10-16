@@ -4,6 +4,7 @@ npm-debug.log*
 .npmrc
 dist/
 build/
+uploads/
 
 # Editor directories and files
 .vscode/*

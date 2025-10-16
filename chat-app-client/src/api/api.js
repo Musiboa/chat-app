@@ -23,6 +23,23 @@ export function reqLogup(data) {
   })
 }
 
+export function reqSetUserInfo(data) {
+  return request({
+    method: 'POST',
+    url: '/auth/set',
+    data
+  })
+}
+
+// 更新用户信息
+export function updateUserInfo(data) {
+  return request({
+    method: 'POST',
+    url: `/auth/update`,
+    data
+  })
+}
+
 // 获取当前用户信息
 export function getCurrentUser() {
   return request({

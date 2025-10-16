@@ -37,6 +37,7 @@ const handleAddFriend = async (id) => {
   try {
     await addFriend({ friendId: id })
     ElMessage.success('好友请求已发送')
+    visible.value = false
   } catch (error) {
     const { response: { data } } = error
     ElMessage.error(data.message)

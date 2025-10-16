@@ -34,6 +34,11 @@ export const routes = [
         component: () => import('@/views/login/index.vue')
       },
       {
+        path: 'logup',
+        name: 'logup',
+        component: () => import('@/views/logup/index.vue')
+      },
+      {
         path: 'chat',
         name: 'chat',
         component: () => import('@/views/chat/index.vue'),
@@ -50,7 +55,7 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   const isAuthenticated = localStorage.getItem('token')
-  if (to.name !== 'login' && !isAuthenticated) {
+  if (to.name !== 'login' && to.name !== 'logup' && !isAuthenticated) {
     next({ name: 'login' })
   } else {
     next()

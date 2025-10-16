@@ -5,7 +5,7 @@
         <li class="menu-item">
           <el-avatar shape="square" :size="40" :src="userInfo.avatar"></el-avatar>
         </li>
-        <li v-for="route in menuRoutes" :key="route.name" class="menu-item" @click="navigateTo(route.path)">
+        <li v-for="route in menuRoutes" :key="route.name" class="menu-item" @click="navigateTo(route.name)">
           <el-icon :size="24">
             <component :is="route.meta.icon"></component>
           </el-icon>
@@ -43,8 +43,8 @@ import { useRouter } from 'vue-router';
 import { menuRoutes } from '@/router';
 import { getCurrentUser, reqLogout } from '@/api/api';
 const $router = useRouter();
-const navigateTo = (path) => {
-  $router.push(path);
+const navigateTo = (name) => {
+  $router.push({ name, params: { conversationId: null } });
 };
 let userInfo = ref({});
 const getUserInfo = async () => {

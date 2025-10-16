@@ -40,9 +40,11 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
 import SearchInput from '@/views/chat/components/SearchInput.vue';
 import { getFriendList, getNewFriendList, handleFriendRequest, createConversation } from '@/api/api';
+const $router = useRouter();
 const friendProps = {
   label: 'label',
   children: 'list'
@@ -100,9 +102,13 @@ const handleRequest = async (node, isAgree) => {
 const createChat = async () => {
   try {
     const params = { name: currentFriend.value.username, memberIds: [currentFriend.value.userId] };
-    console.log('params:', params);
-    await createConversation(params);
-    ElMessage.success('已创建会话');
+    const { data: { conversation } } = await createConversation(params);
+    $router.push({
+      name: 'conversations',
+      params: {
+        conversationId: conversation.id
+      }
+    });
   } catch (error) {
     const { response: { data } } = error;
     ElMessage.error(data.message);

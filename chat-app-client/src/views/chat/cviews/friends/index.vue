@@ -123,13 +123,15 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   display: flex;
+  .el-main {
+    background-color: rgba(242, 242, 242, 0.35);
+  }
 }
 
 .friends-aside {
   box-sizing: border-box;
   height: 100%;
   padding: 20px 0;
-  border-right: 1px solid #dfe1e2;
 }
 
 .friend-tree-node {

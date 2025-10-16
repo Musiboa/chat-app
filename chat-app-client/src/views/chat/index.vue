@@ -78,7 +78,7 @@ onMounted(() => {
   width: 80px;
   box-sizing: border-box;
   padding: 20px 10px;
-  border-right: 1px solid #dfe1e2;
+  background-color: rgba(203, 203, 203, 0.35);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -91,7 +91,7 @@ onMounted(() => {
     margin-bottom: 10px;
     border-radius: 8px;
     &:not(:first-child):hover {
-      background-color: #f5f7f9;
+      background-color: rgba(195, 195, 196, 0.2);
     }
   }
   .action-list {

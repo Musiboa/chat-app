@@ -3,7 +3,7 @@
     <el-aside class="conversation-aside">
       <search-input></search-input>
       <ul class="conversation-list">
-        <li v-for="conv in conversationList" :key="conv.id" class="conversation-item" @click="switchConversation(conv)">
+        <li v-for="conv in conversationList" :key="conv.id" class="conversation-item" :class="{'active': conv.id === currentConversation.id}" @click="switchConversation(conv)">
           <el-avatar shape="circle" :size="50" :src="getConvAvatar(conv)"></el-avatar>
           <span>{{ getConvName(conv) }}</span>
         </li>
@@ -171,6 +171,7 @@ onUnmounted(() => {
   display: flex;
   .el-main {
     padding: 0;
+    background-color: rgba(242, 242, 242, 0.35);
   }
 }
 
@@ -178,7 +179,6 @@ onUnmounted(() => {
   box-sizing: border-box;
   height: 100%;
   padding: 20px 0;
-  border-right: 1px solid #dfe1e2;
 }
 
 .conversation-list {
@@ -190,11 +190,11 @@ onUnmounted(() => {
     gap: 10px;
 
     &.active {
-      background-color: #eaeff2;
+      background-color: #f5f5f5;
     }
 
     &:hover {
-      background-color: #f5f7f9;
+      background-color: #f5f5f5;
       cursor: pointer;
     }
   }

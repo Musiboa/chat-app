@@ -7,6 +7,47 @@ export const createConversation = async (req, res) => {
     const userId = req.user.id
     const { name, isGroup = false, memberIds = [] } = req.body
 
+    // 如果是私人聊天（非群聊），检查是否已存在对话
+    if (!isGroup && memberIds.length === 1) {
+      const otherUserId = memberIds[0]
+      
+      const [existingConversations] = await connection.query(`
+        SELECT c.id 
+        FROM conversations c
+        JOIN conversation_members cm1 ON c.id = cm1.conversation_id
+        JOIN conversation_members cm2 ON c.id = cm2.conversation_id
+        WHERE c.is_group = 0
+          AND cm1.user_id = ?
+          AND cm2.user_id = ?
+          AND NOT EXISTS (
+            SELECT 1 FROM conversation_members cm3 
+            WHERE cm3.conversation_id = c.id 
+              AND cm3.user_id NOT IN (?, ?)
+          )
+      `, [userId, otherUserId, userId, otherUserId])
+
+      // 如果已存在对话，返回该对话
+      if (existingConversations.length > 0) {
+        const [conversation] = await pool.query(
+          `
+          SELECT c.*, 
+                 GROUP_CONCAT(u.username) as members
+          FROM conversations c
+          LEFT JOIN conversation_members cm ON c.id = cm.conversation_id
+          LEFT JOIN users u ON cm.user_id = u.id
+          WHERE c.id = ?
+          GROUP BY c.id
+        `,
+          [existingConversations[0].id]
+        )
+
+        return res.status(200).json({
+          message: '对话已存在',
+          conversation: conversation[0]
+        })
+      }
+    }
+
     // 开始事务
     await connection.beginTransaction()
 

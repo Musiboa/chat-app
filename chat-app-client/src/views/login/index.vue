@@ -29,6 +29,7 @@ import { useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { reqLogin, reqLogup } from '@/api/api';
 import { ElMessage } from 'element-plus';
+import socketService from '@/utils/socket'
 const $router = useRouter();
 const userStore = useUserStore()
 let isLogup = ref(false);
@@ -52,6 +53,11 @@ const login = async () => {
     localStorage.setItem('token', data.token)
     ElMessage.success('登录成功')
     userStore.setUser(data.user)
+
+    // 连接websokect，发送登录通知
+    socketService.connect()
+    socketService.userLogin(data.user.id)
+    
     await nextTick()
     $router.push({ name: 'chat' })
   } catch (error) { 

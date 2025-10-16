@@ -34,9 +34,10 @@
   </el-container>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { getConversations, getConversationMessages, sendMessage } from '@/api/api'
+import SocketService from '@/utils/socket'
 import SearchInput from '@/views/chat/components/SearchInput.vue';
 const userStore = useUserStore()
 let conversationList = ref([])
@@ -60,29 +61,61 @@ const getConversationMessageList = async () => {
   try {
     const { data: { data } } = await getConversationMessages({conversationId:currentConversation.value.id})
     messageList.value = data
+    // 等待DOM更新后滚动到底部
+    await nextTick()
+    scrollToBottom()
   } catch (error) {
     console.error('获取会话消息失败:', error)
   }
 }
+
+// 滚动到底部的函数
+const scrollToBottom = () => {
+  if (messageContainer.value) {
+    messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+  }
+}
 const handleSendMessage = async () => { 
   try {
-    const params = {
+    SocketService.sendMessage({
       conversationId: currentConversation.value.id,
       content: messageContent.value,
-    }
-    const { data } = await sendMessage(params)
-    messageContent.value = ''
-    await getConversationMessageList()
-    // 滚动到最底部
-    if (messageContainer.value) {
-      messageContainer.value.scrollTop = messageContainer.value.scrollHeight
-    }
+    })
   } catch (error) {
     console.error('发送消息失败:', error)
   }
 }
+// 处理发送成功的消息
+const handleMessageSent = (message) => {
+  messageList.value.push(message)
+  messageContent.value = ''
+  setTimeout(() => {
+    scrollToBottom()
+  }, 100)
+}
+
+// 处理接收到的新消息
+const handleReceiveMessage = (message) => {
+  if (currentConversation.value.id === message.conversation_id) {
+    messageList.value.push(message)
+    setTimeout(() => {
+      scrollToBottom()
+    }, 100)
+  }
+}
+
 onMounted(() => {
   getConversationList()
+
+  // 注册消息监听
+  SocketService.onMessage(handleReceiveMessage)
+  SocketService.onMessageSent(handleMessageSent)
+})
+
+onUnmounted(() => {
+  // 移除消息监听
+  SocketService.offMessage(handleReceiveMessage)
+  SocketService.offMessageSent(handleMessageSent)
 })
 </script>
 <style lang="less" scoped>

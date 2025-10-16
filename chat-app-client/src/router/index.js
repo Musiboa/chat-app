@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 export const menuRoutes = [
   {
-    path: 'conversations',
+    path: 'conversations/:conversationId?',
     name: 'conversations',
     meta: {
       title: '消息',

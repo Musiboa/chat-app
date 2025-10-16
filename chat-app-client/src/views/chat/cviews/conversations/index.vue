@@ -34,17 +34,39 @@
   </el-container>
 </template>
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { getConversations, getConversationMessages } from '@/api/api'
 import SocketService from '@/utils/socket'
 import SearchInput from '@/views/chat/components/SearchInput.vue';
+const $route = useRoute()
+const $router = useRouter()
 const userStore = useUserStore()
 let conversationList = ref([])
 let currentConversation = ref({})
 let messageContent = ref('')
 let messageList = ref([])
 const messageContainer = ref(null)
+// 监听路由参数变化
+watch(
+  () => $route.params.conversationId,
+  (newConversationId) => {
+    if (newConversationId) {
+      // 找到对应的对话并切换
+      const conversation = conversationList.value.find(conv => conv.id == newConversationId)
+      if (conversation) {
+        switchConversation(conversation)
+      }
+    } else {
+      // 没有参数时清空当前对话
+      currentConversation.value = {}
+      messageList.value = []
+    }
+  },
+  { immediate: true }
+)
+
 // 计算会话名称
 // 如果是单聊，返回对方用户名
 // 如果是群聊，返回群名称
@@ -58,12 +80,27 @@ const getConversationList = async () => {
   try {
     const { data } = await getConversations()
     conversationList.value = data
+    // 如果有路由参数，自动加载对应对话
+    const conversationId = $route.params.conversationId
+    if (conversationId) {
+      const conversation = data.find(conv => conv.id == conversationId)
+      if (conversation) {
+        switchConversation(conversation)
+      }
+    }
   } catch (error) {
     console.error('获取会话列表失败:', error)
   }
 }
 const switchConversation = (conv) => {
   currentConversation.value = conv
+  // 更新路由参数
+  if ($route.params.conversationId != conv.id) {
+    $router.push({ 
+      name: 'conversations', 
+      params: { conversationId: conv.id } 
+    })
+  }
   getConversationMessageList()
 }
 const getConversationMessageList = async () => {

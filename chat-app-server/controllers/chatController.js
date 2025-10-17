@@ -8,9 +8,17 @@ export const createConversation = async (req, res) => {
     const { name, isGroup = false, memberIds = [] } = req.body
 
     // 如果是私人聊天（非群聊），检查是否已存在对话
-    if (!isGroup && memberIds.length === 1) {
-      const otherUserId = memberIds[0]
+    if (!isGroup && memberIds.length <= 1) {
+      let otherUserId;
       
+      if (memberIds.length === 1) {
+        otherUserId = memberIds[0];
+      } else {
+        // 自己与自己对话的情况
+        otherUserId = userId;
+      }
+
+      // 检查是否已存在对话（包括自己与自己的对话）
       const [existingConversations] = await connection.query(`
         SELECT c.id 
         FROM conversations c
@@ -60,7 +68,16 @@ export const createConversation = async (req, res) => {
     const conversationId = conversationResult.insertId
 
     // 添加会话成员
-    const members = isGroup ? [userId, ...memberIds] : [userId, ...memberIds]
+    let members;
+    if (isGroup) {
+      members = [userId, ...memberIds]
+    } else if (memberIds.length === 0) {
+      // 处理自己与自己对话的情况，当memberIds为空时
+      members = [userId]
+    } else {
+      members = [userId, ...memberIds]
+    }
+    
     const memberValues = members.map(id => [conversationId, id])
 
     if (memberValues.length > 0) {

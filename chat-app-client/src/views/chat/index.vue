@@ -2,9 +2,27 @@
   <div class="chat-container">
     <div class="side-menu">
       <ul class="menu-list">
-        <li class="menu-item">
-          <el-avatar shape="square" :size="40" :src="userInfo.avatar"></el-avatar>
-        </li>
+        <el-popover trigger="click" placement="right" width="300">
+          <div class="user-info-popover">
+            <div class="popover-header">
+              <el-avatar shape="square" :size="50" :src="userInfo.avatar"></el-avatar>
+              <div class="header-desc">
+                <h2>{{ userInfo.username }}</h2>
+                <p>{{ userInfo.status === 'online' ? '在线' : '离线' }}</p>
+              </div>
+            </div>
+            <div class="popover-main"></div>
+            <div class="popover-footer">
+              <el-button @click="showUpdateUserInfo = true">编辑资料</el-button>
+              <el-button type="primary">发消息</el-button>
+            </div>
+          </div>
+          <template #reference>
+            <li class="menu-item">
+              <el-avatar shape="square" :size="40" :src="userInfo.avatar"></el-avatar>
+            </li>
+          </template>
+        </el-popover>
         <li v-for="route in menuRoutes" :key="route.name" class="menu-item" @click="navigateTo(route.name)">
           <el-icon :size="24">
             <component :is="route.meta.icon"></component>
@@ -35,6 +53,11 @@
     <div class="main-container">
       <router-view></router-view>
     </div>
+    <update-user-info
+      v-model="showUpdateUserInfo"
+      :user-info="userInfo"
+      @update="getUserInfo"
+    />
   </div>
 </template>
 <script setup>
@@ -42,11 +65,13 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { menuRoutes } from '@/router';
 import { getCurrentUser, reqLogout } from '@/api/api';
+import UpdateUserInfo from '@/views/chat/components/UpdateUserInfo.vue';
 const $router = useRouter();
 const navigateTo = (name) => {
   $router.push({ name, params: { conversationId: null } });
 };
 let userInfo = ref({});
+let showUpdateUserInfo = ref(false);
 const getUserInfo = async () => {
   try {
     const { data } = await getCurrentUser();
@@ -99,6 +124,29 @@ onMounted(() => {
       display: flex;
       justify-content: center;
     }
+  }
+}
+.user-info-popover { 
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  .popover-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    .header-desc {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      h2 {
+        font-size: 16px;
+        font-weight: 500;
+        color: #000;
+      }
+    }
+  }
+  .popover-footer {
+    text-align: center;
   }
 }
 .action-popover {

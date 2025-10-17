@@ -125,10 +125,10 @@ export const getConversations = async (req, res) => {
 
     const [conversations] = await pool.query(
       `
-      SELECT c.id, c.name, c.is_group, c.avatar, c.created_at, c.updated_at,
+      SELECT c.id, c.name, c.is_group, c.avatar as conversation_avatar, c.created_at, c.updated_at,
              cm.user_id,
              u.username,
-             u.avatar,
+             u.avatar as user_avatar,
              COUNT(cm2.user_id) as member_count
       FROM conversations c
       JOIN conversation_members cm ON c.id = cm.conversation_id
@@ -154,7 +154,7 @@ export const getConversations = async (req, res) => {
           id: row.id,
           name: row.name,
           is_group: row.is_group,
-          avatar: row.avatar,
+          avatar: row.conversation_avatar,
           created_at: row.created_at,
           updated_at: row.updated_at,
           member_count: row.member_count,
@@ -165,7 +165,7 @@ export const getConversations = async (req, res) => {
       conversationMap.get(row.id).members.push({
         userId: row.user_id,
         username: row.username,
-        avatar: row.avatar
+        avatar: row.user_avatar
       })
     })
 

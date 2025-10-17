@@ -71,10 +71,22 @@ watch(
 // 如果是单聊，返回对方用户名
 // 如果是群聊，返回群名称
 const getConvName = (conv) => { 
-  return conv.name || conv.members.find(p => p.userId !== userStore.user.id).username
+  if(conv.members.length === 1) {
+    return userStore.user.username
+  }
+  if (!conv.isGroup && conv.members.length === 2) {
+    return conv.members.find(p => p.userId !== userStore.user.id).username
+  }
+  return conv.name
 }
 const getConvAvatar = (conv) => {
-  return conv.isGroup ? conv.avatar : conv.members.find(p => p.userId !== userStore.user.id).avatar
+  if (conv.members.length === 1) {
+    return userStore.user.avatar
+  }
+  if (!conv.isGroup && conv.members.length === 2) {
+    return conv.members.find(p => p.userId !== userStore.user.id).avatar
+  }
+  return conv.avatar
 }
 const getConversationList = async () => {
   try {

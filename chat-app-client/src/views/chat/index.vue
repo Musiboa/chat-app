@@ -2,7 +2,7 @@
   <div class="chat-container">
     <div class="side-menu">
       <ul class="menu-list">
-        <el-popover trigger="click" placement="right" width="300">
+        <el-popover :visible="showUserInfo" placement="right" width="300">
           <div class="user-info-popover">
             <div class="popover-header">
               <el-avatar shape="square" :size="50" :src="userInfo.avatar"></el-avatar>
@@ -14,11 +14,11 @@
             <div class="popover-main"></div>
             <div class="popover-footer">
               <el-button @click="showUpdateUserInfo = true">编辑资料</el-button>
-              <el-button type="primary">发消息</el-button>
+              <el-button type="primary" @click="creatChatWithMyself">发消息</el-button>
             </div>
           </div>
           <template #reference>
-            <li class="menu-item">
+            <li class="menu-item" @click="showUserInfo = !showUserInfo">
               <el-avatar shape="square" :size="40" :src="userInfo.avatar"></el-avatar>
             </li>
           </template>
@@ -56,7 +56,8 @@
     <update-user-info
       v-model="showUpdateUserInfo"
       :user-info="userInfo"
-      @update="getUserInfo"
+      @update="handleUpdateUserInfo"
+      @close="showUserInfo = false"
     />
   </div>
 </template>
@@ -64,7 +65,7 @@
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { menuRoutes } from '@/router';
-import { getCurrentUser, reqLogout } from '@/api/api';
+import { getCurrentUser, reqLogout, createConversation } from '@/api/api';
 import UpdateUserInfo from '@/views/chat/components/UpdateUserInfo.vue';
 const $router = useRouter();
 const navigateTo = (name) => {
@@ -72,6 +73,7 @@ const navigateTo = (name) => {
 };
 let userInfo = ref({});
 let showUpdateUserInfo = ref(false);
+let showUserInfo = ref(false);
 const getUserInfo = async () => {
   try {
     const { data } = await getCurrentUser();
@@ -88,6 +90,19 @@ const handleLogout = async () => {
   } catch (error) {
     console.error('退出登录失败:', error);
   }
+};
+const creatChatWithMyself = async () => {
+  try {
+    const { data: { conversation } } = await createConversation({});
+    showUserInfo.value = false;
+    $router.push({ name: 'conversations', params: { conversationId: conversation.id } });
+  } catch (error) {
+    console.log(error);
+  }
+};
+const handleUpdateUserInfo = (updatedUserInfo) => {
+  showUserInfo.value = false;
+  getUserInfo();
 };
 onMounted(() => {
   getUserInfo();

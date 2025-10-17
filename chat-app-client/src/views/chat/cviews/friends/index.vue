@@ -101,7 +101,7 @@ const handleRequest = async (node, isAgree) => {
 };
 const createChat = async () => {
   try {
-    const params = { name: currentFriend.value.username, memberIds: [currentFriend.value.userId] };
+    const params = { memberIds: [currentFriend.value.userId] };
     const { data: { conversation } } = await createConversation(params);
     $router.push({
       name: 'conversations',

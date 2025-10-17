@@ -1,5 +1,5 @@
 <template>
-  <el-dialog title="编辑资料" v-model="visible" center>
+  <el-dialog title="编辑资料" v-model="visible" center @close="$emit('close')">
     <div class="user-info-container">
       <div class="user-avatar">
         <el-upload class="avatar-uploader" :action="uploadUrl" name="image"
@@ -28,11 +28,13 @@
 <script setup>
 import { ref, watch } from 'vue';
 import { updateUserInfo } from '@/api/api';
+import { useUserStore } from '@/stores/user';
+const userStore = useUserStore();
 const visible = defineModel();
 const props = defineProps({
   userInfo: Object
 })
-const $emit = defineEmits(['update']);
+const $emit = defineEmits(['update', 'close']);
 const uploadUrl = 'http://localhost:3000/api/upload/image';
 const userInfoCopy = ref({});
 watch(visible, (newVal) => {
@@ -43,7 +45,8 @@ const handleAvatarSuccess = (res) => {
 }
 const handleUpdate = async () => {
   try {
-    await updateUserInfo(userInfoCopy.value);
+    const { data } = await updateUserInfo(userInfoCopy.value);
+    userStore.setUser(data);
     visible.value = false;
     $emit('update');
   } catch (error) {

@@ -18,8 +18,9 @@
             </div>
           </div>
           <template #reference>
-            <li class="menu-item" @click="showUserInfo = !showUserInfo">
+            <li class="menu-item avatar-item" @click="showUserInfo = !showUserInfo">
               <el-avatar shape="square" :size="40" :src="userInfo.avatar"></el-avatar>
+              <i class="status-icon" v-if="userInfo.status === 'online'"></i>
             </li>
           </template>
         </el-popover>
@@ -134,6 +135,18 @@ onMounted(() => {
     border-radius: 8px;
     &:not(:first-child):hover {
       background-color: rgba(195, 195, 196, 0.2);
+    }
+  }
+  .avatar-item { 
+    position: relative;
+    .status-icon {
+      position: absolute;
+      bottom: 5px;
+      right: 10px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: #26e78b;
     }
   }
   .action-list {

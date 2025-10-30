@@ -7,7 +7,13 @@
           <div class="friend-tree-node" @click="showFriendDetail(node)">
             <span class="tree-node-info">
               <el-avatar shape="circle" :size="20" :src="data.avatar" v-if="node.level > 1"></el-avatar>
-              <span>{{ data.label }}</span>
+              <span class="tree-node-info-right">
+                <span>{{ data.label }}</span>
+                <span v-if="node.level > 1">
+                  <span v-if="data.status === 'online'" class="online-status">[<i class="icon-online"></i>在线]</span>
+                  <span v-else class="offline-status">[<i class="icon-offline"></i>离线]</span>
+                </span>
+              </span>
             </span>
             <div class="tree-node-tool" v-if="node.parent.data.label === '新朋友'">
               <el-button text @click.stop="handleRequest(data, true)">同意</el-button>
@@ -39,9 +45,10 @@
   </el-container>
 </template>
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessageBox, ElMessage } from 'element-plus';
+import SocketService from '@/utils/socket';
 import SearchInput from '@/views/chat/components/SearchInput.vue';
 import { getFriendList, getNewFriendList, handleFriendRequest, createConversation } from '@/api/api';
 const $router = useRouter();
@@ -116,6 +123,12 @@ const createChat = async () => {
 };
 onMounted(() => {
   getFriends();
+  // 监听好友状态变化
+  SocketService.onUserStatusChange(getFriends);
+});
+onUnmounted(() => {
+  // 移除好友状态变化监听
+  SocketService.offUserStatusChange(getFriends);
 });
 </script>
 <style lang="less" scoped>
@@ -150,6 +163,36 @@ onMounted(() => {
   .el-button {
     padding: 0;
     margin: 0;
+  }
+  .tree-node-info-right {
+    display: flex;
+    flex-direction: column;
+    .online-status,
+    .offline-status {
+      font-size: 12px;
+      line-height: 12px;
+      color: gray;
+    }
+    .icon-online,
+    .icon-offline {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin: 0 2px;
+    }
+    .icon-online {
+      background-color: #26e78b;
+    }
+    .icon-offline {
+      background-color: #bbbdc8;
+    }
+  }
+}
+
+::v-deep(.el-tree-node__children) {
+  .el-tree-node__content {
+    height: fit-content;
   }
 }
 

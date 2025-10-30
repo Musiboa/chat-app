@@ -66,6 +66,7 @@ import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { menuRoutes } from '@/router';
 import { getCurrentUser, reqLogout, createConversation } from '@/api/api';
+import SocketService from '@/utils/socket';
 import UpdateUserInfo from '@/views/chat/components/UpdateUserInfo.vue';
 const $router = useRouter();
 const navigateTo = (name) => {
@@ -86,6 +87,7 @@ const handleLogout = async () => {
   try {
     await reqLogout();
     localStorage.removeItem('token');
+    SocketService.disconnect();
     $router.push({ name: 'login' });
   } catch (error) {
     console.error('退出登录失败:', error);
@@ -100,7 +102,7 @@ const creatChatWithMyself = async () => {
     console.log(error);
   }
 };
-const handleUpdateUserInfo = (updatedUserInfo) => {
+const handleUpdateUserInfo = () => {
   showUserInfo.value = false;
   getUserInfo();
 };

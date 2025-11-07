@@ -26,7 +26,7 @@ export const routes = [
     path: '/',
     name: 'home',
     component: () => import('@/App.vue'),
-    redirect: '/chat',
+    redirect: '/login',
     children: [
       {
         path: 'login',

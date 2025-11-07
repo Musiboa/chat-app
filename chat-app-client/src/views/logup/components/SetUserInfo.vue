@@ -2,11 +2,19 @@
   <el-dialog title="设置用户信息" v-model="visible" center>
     <el-form :model="userInfo" class="login-form">
       <el-form-item prop="username">
-        <el-input v-model="userInfo.username" placeholder="请输入用户名"></el-input>
+        <el-input
+          v-model="userInfo.username"
+          placeholder="请输入用户名"
+        ></el-input>
       </el-form-item>
       <el-form-item prop="avatar">
-        <el-upload class="avatar-uploader" :action="uploadUrl" name="image" :show-file-list="false"
-          :on-success="handleAvatarSuccess">
+        <el-upload
+          class="avatar-uploader"
+          :action="uploadUrl"
+          name="image"
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+        >
           <img v-if="userInfo.avatar" :src="userInfo.avatar" class="avatar" />
           <el-icon v-else class="avatar-uploader-icon">
             <Plus />
@@ -21,20 +29,20 @@
   </el-dialog>
 </template>
 <script setup>
-import { ref, defineProps } from "vue";
-import { useRouter } from "vue-router";
-import { reqSetUserInfo } from "@/api/api.js";
+import { ref, defineProps } from 'vue'
+import { useRouter } from 'vue-router'
+import { reqSetUserInfo } from '@/api/api.js'
 const props = defineProps({
-  userId: Number,
-});
-const $router = useRouter();
-const uploadUrl = "http://localhost:3000/api/upload/image";
-let visible = defineModel();
+  userId: Number
+})
+const $router = useRouter()
+const uploadUrl = 'http://localhost:3000/api/upload/image'
+let visible = defineModel()
 let userInfo = ref({
-  username: "",
-  avatar: ""
-});
-const handleAvatarSuccess = (res) => {
+  username: '',
+  avatar: ''
+})
+const handleAvatarSuccess = res => {
   userInfo.value.avatar = res.url
 }
 const setUserInfo = async () => {

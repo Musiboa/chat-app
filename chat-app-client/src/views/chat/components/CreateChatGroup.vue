@@ -2,19 +2,35 @@
   <el-dialog v-model="visible" :close-on-click-modal="false" center>
     <el-row>
       <el-col :span="12" class="left-col">
-        <el-input v-model="keywords" placeholder="搜索" prefix-icon="Search" @keyup.enter="searchFriends"></el-input>
-        <el-tree :data="friendList" :props="defaultProps" show-checkbox @check-change="handleCheckChange"></el-tree>
+        <el-input
+          v-model="keywords"
+          placeholder="搜索"
+          prefix-icon="Search"
+          @keyup.enter="searchFriends"
+        ></el-input>
+        <el-tree
+          :data="friendList"
+          :props="defaultProps"
+          show-checkbox
+          @check-change="handleCheckChange"
+        ></el-tree>
       </el-col>
       <el-col :span="12" class="right-col">
         <h1>创建群聊</h1>
         <ul class="selected-friend-list">
-          <li v-for="item in groupMembers" :key="item.id" class="selected-friend-item">
+          <li
+            v-for="item in groupMembers"
+            :key="item.id"
+            class="selected-friend-item"
+          >
             <el-avatar :src="item.avatar" shape="circle" :size="30"></el-avatar>
-            <div class="friend-item-info">{{ item.username }}  </div>
+            <div class="friend-item-info">{{ item.username }}</div>
           </li>
         </ul>
         <div class="selected-footer">
-          <el-button type="primary" @click="createGroupChat">创建群聊</el-button>
+          <el-button type="primary" @click="createGroupChat"
+            >创建群聊</el-button
+          >
           <el-button @click="visible = false">取消</el-button>
         </div>
       </el-col>
@@ -42,7 +58,9 @@ const handleCheckChange = (data, checked, indeterminate) => {
   if (checked) {
     groupMembers.value.push(data)
   } else {
-    groupMembers.value = groupMembers.value.filter(item => item.userId !== data.userId)
+    groupMembers.value = groupMembers.value.filter(
+      item => item.userId !== data.userId
+    )
   }
 }
 const getFriends = async () => {
@@ -77,36 +95,42 @@ const createGroupChat = async () => {
 }
 const defaultProps = {
   label: 'username',
-  children: 'list',
+  children: 'list'
 }
 </script>
 <style scoped lang="less">
-.el-row{
+.el-row {
   height: 100%;
 }
+
 .left-col {
   padding-right: 20px;
   height: 100%;
   border-right: 1px solid #dfe1e2;
 }
+
 .right-col {
   display: flex;
   flex-direction: column;
   padding-left: 20px;
   height: 100%;
+
   h1 {
     font-size: 18px;
   }
+
   .selected-friend-list {
     padding: 20px 0;
     height: 100%;
     overflow: auto;
+
     .selected-friend-item {
       display: flex;
       align-items: center;
       margin-bottom: 10px;
     }
   }
+
   .selected-footer {
     padding-top: 20px;
     display: flex;

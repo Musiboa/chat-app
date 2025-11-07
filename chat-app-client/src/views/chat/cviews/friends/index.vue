@@ -6,18 +6,37 @@
         <template #default="{ node, data }">
           <div class="friend-tree-node" @click="showFriendDetail(node)">
             <span class="tree-node-info">
-              <el-avatar shape="circle" :size="20" :src="data.avatar" v-if="node.level > 1"></el-avatar>
+              <el-avatar
+                shape="circle"
+                :size="20"
+                :src="data.avatar"
+                v-if="node.level > 1"
+              ></el-avatar>
               <span class="tree-node-info-right">
                 <span>{{ data.label }}</span>
                 <span v-if="node.level > 1">
-                  <span v-if="data.status === 'online'" class="online-status">[<i class="icon-online"></i>在线]</span>
-                  <span v-else class="offline-status">[<i class="icon-offline"></i>离线]</span>
+                  <span v-if="data.status === 'online'" class="online-status"
+                    >[<i class="icon-online"></i>在线]</span
+                  >
+                  <span v-else class="offline-status"
+                    >[<i class="icon-offline"></i>离线]</span
+                  >
                 </span>
               </span>
             </span>
-            <div class="tree-node-tool" v-if="node.parent.data.label === '新朋友'">
-              <el-button text @click.stop="handleRequest(data, true)">同意</el-button>
-              <el-button text type="danger" @click.stop="handleRequest(data, false)">拒绝</el-button>
+            <div
+              class="tree-node-tool"
+              v-if="node.parent.data.label === '新朋友'"
+            >
+              <el-button text @click.stop="handleRequest(data, true)"
+                >同意</el-button
+              >
+              <el-button
+                text
+                type="danger"
+                @click.stop="handleRequest(data, false)"
+                >拒绝</el-button
+              >
             </div>
           </div>
         </template>
@@ -27,11 +46,17 @@
       <div class="friends-main" v-if="currentFriend.userId">
         <div class="major-info">
           <div class="major-info-left">
-            <el-avatar :src="currentFriend.avatar" :size="100" shape="circle"></el-avatar>
+            <el-avatar
+              :src="currentFriend.avatar"
+              :size="100"
+              shape="circle"
+            ></el-avatar>
             <div class="major-info-left-text">
               <h2>{{ currentFriend.username }}</h2>
               <p>ID: {{ currentFriend.userId }}</p>
-              <p>状态: {{ currentFriend.status === 'online' ? '在线' : '离线' }}</p>
+              <p>
+                状态: {{ currentFriend.status === 'online' ? '在线' : '离线' }}
+              </p>
             </div>
           </div>
         </div>
@@ -45,17 +70,22 @@
   </el-container>
 </template>
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { ElMessageBox, ElMessage } from 'element-plus';
-import SocketService from '@/utils/socket';
-import SearchInput from '@/views/chat/components/SearchInput.vue';
-import { getFriendList, getNewFriendList, handleFriendRequest, createConversation } from '@/api/api';
-const $router = useRouter();
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessageBox, ElMessage } from 'element-plus'
+import SocketService from '@/utils/socket'
+import SearchInput from '@/views/chat/components/SearchInput.vue'
+import {
+  getFriendList,
+  getNewFriendList,
+  handleFriendRequest,
+  createConversation
+} from '@/api/api'
+const $router = useRouter()
 const friendProps = {
   label: 'label',
   children: 'list'
-};
+}
 let friendList = ref([
   {
     label: '新朋友',
@@ -65,77 +95,89 @@ let friendList = ref([
     label: '我的好友',
     list: []
   }
-]);
-let currentFriend = ref({});
+])
+let currentFriend = ref({})
 const getFriends = async () => {
   try {
-    const { data: friendData } = await getFriendList();
-    const { data: newFriendData } = await getNewFriendList();
-    friendData.forEach((item) => {
-      item.label = item.username;
-    });
-    newFriendData.forEach((item) => {
-      item.label = item.username;
-    });
-    friendList.value[0].list = newFriendData;
-    friendList.value[1].list = friendData;
+    const { data: friendData } = await getFriendList()
+    const { data: newFriendData } = await getNewFriendList()
+    friendData.forEach(item => {
+      item.label = item.username
+    })
+    newFriendData.forEach(item => {
+      item.label = item.username
+    })
+    friendList.value[0].list = newFriendData
+    friendList.value[1].list = friendData
   } catch (error) {
-    console.error('获取好友列表失败:', error);
+    console.error('获取好友列表失败:', error)
   }
-};
-const showFriendDetail = (node) => {
-  if(node.level <= 1) return;
-  currentFriend.value = node.data;
-};
+}
+const showFriendDetail = node => {
+  if (node.level <= 1) return
+  currentFriend.value = node.data
+}
 const handleRequest = async (node, isAgree) => {
-  const message = isAgree ? '同意' : '拒绝';
+  const message = isAgree ? '同意' : '拒绝'
   ElMessageBox.confirm(`你确定要${message}好友请求吗？`, '提示', {
     confirmButtonText: '确定',
-    cancelButtonText: '取消',
-  }).then(async () => {
-    const params = { requestId: node.requestId, action: isAgree ? 'accepted' : 'rejected' };
-    try {
-      await handleFriendRequest(params);
-      ElMessage.success(`已${message}好友请求`);
-      getFriends();
-    } catch (error) {
-      const { response: { data } } = error;
-      ElMessage.error(data.message);
-    }
-  }).catch(() => {
-    console.log('取消好友请求');
-  });
-};
+    cancelButtonText: '取消'
+  })
+    .then(async () => {
+      const params = {
+        requestId: node.requestId,
+        action: isAgree ? 'accepted' : 'rejected'
+      }
+      try {
+        await handleFriendRequest(params)
+        ElMessage.success(`已${message}好友请求`)
+        getFriends()
+      } catch (error) {
+        const {
+          response: { data }
+        } = error
+        ElMessage.error(data.message)
+      }
+    })
+    .catch(() => {
+      console.log('取消好友请求')
+    })
+}
 const createChat = async () => {
   try {
-    const params = { memberIds: [currentFriend.value.userId] };
-    const { data: { conversation } } = await createConversation(params);
+    const params = { memberIds: [currentFriend.value.userId] }
+    const {
+      data: { conversation }
+    } = await createConversation(params)
     $router.push({
       name: 'conversations',
       params: {
         conversationId: conversation.id
       }
-    });
+    })
   } catch (error) {
-    const { response: { data } } = error;
-    ElMessage.error(data.message);
+    const {
+      response: { data }
+    } = error
+    ElMessage.error(data.message)
   }
-};
+}
 onMounted(() => {
-  getFriends();
+  getFriends()
   // 监听好友状态变化
-  SocketService.onUserStatusChange(getFriends);
-});
+  SocketService.onUserStatusChange(getFriends)
+})
 onUnmounted(() => {
   // 移除好友状态变化监听
-  SocketService.offUserStatusChange(getFriends);
-});
+  SocketService.offUserStatusChange(getFriends)
+})
 </script>
 <style lang="less" scoped>
 .friends-container {
   width: 100%;
   height: 100%;
   display: flex;
+
   .el-main {
     background-color: rgba(242, 242, 242, 0.35);
   }
@@ -155,24 +197,29 @@ onUnmounted(() => {
   align-items: center;
   padding-right: 20px;
 }
+
 .tree-node-info,
 .tree-node-tool {
   display: flex;
   align-items: center;
   gap: 5px;
+
   .el-button {
     padding: 0;
     margin: 0;
   }
+
   .tree-node-info-right {
     display: flex;
     flex-direction: column;
+
     .online-status,
     .offline-status {
       font-size: 12px;
       line-height: 12px;
       color: gray;
     }
+
     .icon-online,
     .icon-offline {
       display: inline-block;
@@ -181,9 +228,11 @@ onUnmounted(() => {
       border-radius: 50%;
       margin: 0 2px;
     }
+
     .icon-online {
       background-color: #26e78b;
     }
+
     .icon-offline {
       background-color: #bbbdc8;
     }
@@ -202,34 +251,39 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
 }
+
 .friends-main {
   height: 100%;
   flex: 1;
   padding: 50px;
   display: flex;
   flex-direction: column;
+
   .btn-group {
     display: flex;
     justify-content: center;
     padding: 20px 0;
   }
 }
+
 .major-info {
   padding: 20px 0;
   border-bottom: 1px solid #f0f0f0;
 }
+
 .major-info-left {
   display: flex;
   align-items: center;
   gap: 20px;
+
   .major-info-left-text {
     display: flex;
     flex-direction: column;
     gap: 5px;
+
     h2 {
       font-weight: 500;
     }
   }
 }
 </style>
-

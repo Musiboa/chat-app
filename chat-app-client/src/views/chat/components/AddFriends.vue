@@ -1,7 +1,16 @@
 <template>
-  <el-dialog title="添加好友" v-model="visible" center :close-on-click-modal="false">
+  <el-dialog
+    title="添加好友"
+    v-model="visible"
+    center
+    :close-on-click-modal="false"
+  >
     <div class="add-friends-content">
-      <el-input v-model="keywords" @keyup.enter="handleSearchUsers" placeholder="请输入搜索关键词"></el-input>
+      <el-input
+        v-model="keywords"
+        @keyup.enter="handleSearchUsers"
+        placeholder="请输入搜索关键词"
+      ></el-input>
       <div class="no-data" v-if="userList.length === 0">暂无用户</div>
       <ul class="user-list" v-else>
         <li v-for="user in userList" :key="user.id" class="user-item">
@@ -10,7 +19,9 @@
             <span>{{ user.username }}</span>
           </div>
           <div class="user-item-tool">
-            <el-button type="primary" @click="handleAddFriend(user.id)">添加</el-button>
+            <el-button type="primary" @click="handleAddFriend(user.id)"
+              >添加</el-button
+            >
           </div>
         </li>
       </ul>
@@ -33,13 +44,15 @@ const handleSearchUsers = async () => {
     console.error('搜索用户失败:', error)
   }
 }
-const handleAddFriend = async (id) => {
+const handleAddFriend = async id => {
   try {
     await addFriend({ friendId: id })
     ElMessage.success('好友请求已发送')
     visible.value = false
   } catch (error) {
-    const { response: { data } } = error
+    const {
+      response: { data }
+    } = error
     ElMessage.error(data.message)
   }
 }

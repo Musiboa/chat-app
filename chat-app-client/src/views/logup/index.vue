@@ -4,14 +4,26 @@
       <h1 class="form-title">注册</h1>
       <el-form :model="userInfo" class="logup-form">
         <el-form-item prop="phone">
-          <el-input v-model="userInfo.phone" placeholder="请输入手机号" prefix-icon="Iphone" clearable></el-input>
+          <el-input
+            v-model="userInfo.phone"
+            placeholder="请输入手机号"
+            prefix-icon="Iphone"
+            clearable
+          ></el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="userInfo.password" type="password" show-password placeholder="请输入密码"
-            prefix-icon="Lock"></el-input>
+          <el-input
+            v-model="userInfo.password"
+            type="password"
+            show-password
+            placeholder="请输入密码"
+            prefix-icon="Lock"
+          ></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" class="confirm-btn" @click="logup">注册</el-button>
+          <el-button type="primary" class="confirm-btn" @click="logup"
+            >注册</el-button
+          >
         </el-form-item>
       </el-form>
     </div>
@@ -19,13 +31,9 @@
   </div>
 </template>
 <script setup>
-import { nextTick, ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUserStore } from '@/stores/user';
-import { reqLogup } from '@/api/api';
-import { ElMessage } from 'element-plus';
-import SetUserInfo from './components/SetUserInfo.vue';
-let isLogup = ref(false);
+import { ref } from 'vue'
+import { reqLogup } from '@/api/api'
+import SetUserInfo from './components/SetUserInfo.vue'
 const userInfo = ref({
   password: '',
   phone: ''
@@ -50,7 +58,13 @@ const logup = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(to top right, rgb(147 197 253 / .5) 0%, #fff 20%, #fff 80%, rgb(147 197 253 / .5) 100%);
+  background: linear-gradient(
+    to top right,
+    rgb(147 197 253 / 0.5) 0%,
+    #fff 20%,
+    #fff 80%,
+    rgb(147 197 253 / 0.5) 100%
+  );
 
   .form-container {
     box-sizing: border-box;
@@ -58,8 +72,7 @@ const logup = async () => {
     height: 50vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0px 0px 12px rgba(0, 0, 0, .12);
-    ;
+    box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.12);
     border-radius: 2vh;
     padding: 50px;
     background-color: #fff;

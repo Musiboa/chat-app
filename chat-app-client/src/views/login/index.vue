@@ -64,6 +64,12 @@ const login = async () => {
     $router.push({ name: 'chat' })
   } catch (error) {
     console.log(error)
+    const {
+      response: {
+        data: { message }
+      }
+    } = error
+    ElMessage.error(message)
   }
 }
 </script>
@@ -81,7 +87,6 @@ const login = async () => {
     #fff 80%,
     rgb(147 197 253 / 0.5) 100%
   );
-
   .form-container {
     box-sizing: border-box;
     width: 400px;

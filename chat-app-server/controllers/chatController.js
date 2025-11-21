@@ -9,17 +9,18 @@ export const createConversation = async (req, res) => {
 
     // 如果是私人聊天（非群聊），检查是否已存在对话
     if (!isGroup && memberIds.length <= 1) {
-      let otherUserId;
-      
+      let otherUserId
+
       if (memberIds.length === 1) {
-        otherUserId = memberIds[0];
+        otherUserId = memberIds[0]
       } else {
         // 自己与自己对话的情况
-        otherUserId = userId;
+        otherUserId = userId
       }
 
       // 检查是否已存在对话（包括自己与自己的对话）
-      const [existingConversations] = await connection.query(`
+      const [existingConversations] = await connection.query(
+        `
         SELECT c.id 
         FROM conversations c
         JOIN conversation_members cm1 ON c.id = cm1.conversation_id
@@ -32,7 +33,9 @@ export const createConversation = async (req, res) => {
             WHERE cm3.conversation_id = c.id 
               AND cm3.user_id NOT IN (?, ?)
           )
-      `, [userId, otherUserId, userId, otherUserId])
+      `,
+        [userId, otherUserId, userId, otherUserId]
+      )
 
       // 如果已存在对话，返回该对话
       if (existingConversations.length > 0) {
@@ -68,7 +71,7 @@ export const createConversation = async (req, res) => {
     const conversationId = conversationResult.insertId
 
     // 添加会话成员
-    let members;
+    let members
     if (isGroup) {
       members = [userId, ...memberIds]
     } else if (memberIds.length === 0) {
@@ -77,7 +80,7 @@ export const createConversation = async (req, res) => {
     } else {
       members = [userId, ...memberIds]
     }
-    
+
     const memberValues = members.map(id => [conversationId, id])
 
     if (memberValues.length > 0) {
@@ -147,7 +150,7 @@ export const getConversations = async (req, res) => {
 
     // 对结果进行重组，将同一会话的成员组织成数组
     const conversationMap = new Map()
-    
+
     conversations.forEach(row => {
       if (!conversationMap.has(row.id)) {
         conversationMap.set(row.id, {
@@ -161,7 +164,7 @@ export const getConversations = async (req, res) => {
           members: []
         })
       }
-      
+
       conversationMap.get(row.id).members.push({
         userId: row.user_id,
         username: row.username,
@@ -226,89 +229,118 @@ export const addMembersToConversation = async (req, res) => {
 
 // 发送消息
 export const sendMessage = async (req, res) => {
-  const connection = await pool.getConnection();
+  const connection = await pool.getConnection()
   try {
-    const senderId = req.user.id;
-    const { conversationId, content, messageType = 'text' } = req.body;
+    const senderId = req.user.id
+    const { conversationId, content, messageType = 'text' } = req.body
 
     // 验证用户是否是会话成员
     const [memberCheck] = await connection.query(
       'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
       [conversationId, senderId]
-    );
+    )
 
     if (memberCheck.length === 0) {
-      return res.status(403).json({ message: '您不是该会话的成员' });
+      return res.status(403).json({ message: '您不是该会话的成员' })
     }
 
     // 插入消息
     const [messageResult] = await connection.query(
       'INSERT INTO messages (conversation_id, sender_id, content, message_type) VALUES (?, ?, ?, ?)',
       [conversationId, senderId, content, messageType]
-    );
+    )
 
     // 更新会话的updated_at字段
     await connection.query(
       'UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?',
       [conversationId]
-    );
+    )
 
     // 获取发送的消息详情
-    const [messageDetails] = await connection.query(`
+    const [messageDetails] = await connection.query(
+      `
       SELECT m.*, u.username as sender_name
       FROM messages m
       JOIN users u ON m.sender_id = u.id
       WHERE m.id = ?
-    `, [messageResult.insertId]);
+    `,
+      [messageResult.insertId]
+    )
 
     res.status(201).json({
       message: '消息发送成功',
       data: messageDetails[0]
-    });
+    })
   } catch (error) {
-    console.error('发送消息错误:', error);
-    res.status(500).json({ message: '服务器错误' });
+    console.error('发送消息错误:', error)
+    res.status(500).json({ message: '服务器错误' })
   } finally {
-    connection.release();
+    connection.release()
   }
-};
+}
 
 // 获取会话消息
 export const getConversationMessages = async (req, res) => {
+  const connection = await pool.getConnection()
   try {
-    const userId = req.user.id;
-    const { conversationId } = req.params;
-    const { limit = 50, offset = 0 } = req.query;
+    const userId = req.user.id
+    const { conversationId } = req.params
+    const { limit = 50, offset = 0 } = req.query
 
     // 验证用户是否是会话成员
     const [memberCheck] = await pool.query(
       'SELECT * FROM conversation_members WHERE conversation_id = ? AND user_id = ?',
       [conversationId, userId]
-    );
+    )
 
     if (memberCheck.length === 0) {
-      return res.status(403).json({ message: '您不是该会话的成员' });
+      return res.status(403).json({ message: '您不是该会话的成员' })
     }
 
+    // 开始事务
+    await connection.beginTransaction()
+
     // 获取会话消息，按创建时间倒序排列
-    const [messages] = await pool.query(`
+    const [messages] = await connection.query(
+      `
       SELECT m.*, u.username as sender_name
       FROM messages m
       JOIN users u ON m.sender_id = u.id
       WHERE m.conversation_id = ?
       ORDER BY m.created_at DESC
       LIMIT ? OFFSET ?
-    `, [conversationId, parseInt(limit), parseInt(offset)]);
+    `,
+      [conversationId, parseInt(limit), parseInt(offset)]
+    )
 
     // 将消息按时间正序排列（从旧到新）
-    const orderedMessages = messages.reverse();
+    const orderedMessages = messages.reverse()
+
+    // 更新其他用户发送给当前用户的消息为已读状态
+    await connection.query(
+      `
+      UPDATE messages 
+      SET is_read = 1 
+      WHERE conversation_id = ? 
+        AND sender_id != ? 
+        AND is_read = 0
+    `,
+      [conversationId, userId]
+    )
+
+    // 提交事务
+    await connection.commit()
 
     res.json({
       message: '获取消息成功',
       data: orderedMessages
-    });
+    })
   } catch (error) {
-    console.error('获取会话消息错误:', error);
-    res.status(500).json({ message: '服务器错误' });
+    // 回滚事务
+    await connection.rollback()
+    console.error('获取会话消息错误:', error)
+    res.status(500).json({ message: '服务器错误' })
+  } finally {
+    connection.release()
   }
-};
+}

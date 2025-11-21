@@ -36,10 +36,20 @@
                   : 'other-message'
               "
             >
-              <p v-if="msg.sender_id !== userStore.user.id">
+              <p
+                v-if="msg.sender_id !== userStore.user.id"
+                class="message-item-content other-message-content"
+              >
                 {{ msg.content }}
               </p>
-              <p v-else>{{ msg.content }}</p>
+              <p v-else>
+                <el-icon color="#c0c4cc" v-show="msg.is_read === 1"
+                  ><CircleCheckFilled
+                /></el-icon>
+                <span class="message-item-content self-message-content">{{
+                  msg.content
+                }}</span>
+              </p>
             </li>
           </ul>
         </div>
@@ -270,7 +280,13 @@ onUnmounted(() => {
       flex-direction: column;
       gap: 10px;
 
-      .message-item {
+      .message-item p {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .message-item-content {
         box-sizing: border-box;
         padding: 10px;
         border-radius: 5px;
@@ -278,11 +294,18 @@ onUnmounted(() => {
 
       .other-message {
         align-self: flex-start;
-        background-color: #e4e7eb;
       }
 
       .self-message {
         align-self: flex-end;
+      }
+
+      .other-message-content {
+        background-color: #e4e7eb;
+      }
+
+      .self-message-content {
+        display: inline-block;
         background-color: #c9e2f0;
       }
     }
